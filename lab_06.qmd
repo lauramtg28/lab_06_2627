@@ -39,23 +39,67 @@ library(tidyverse)
 met <- read_csv("data/MET Office Weather Data.csv")
 met <- met |>
     mutate(date = make_date(year, month, 1))
+head(met)
 ```
 
-- [ ] Produce a line plot showing how the maximum temperature in July recorded in the station in Southampton has changed over time. Add nice labels to your plot.
-- [ ] There appears to be a break in the plotted line. Work out where it is by using `coord_cartesian` to zoom in on the $x$ axis, and then check the dataset to identify the root cause. (Hint: look at the `xlim` argument of `coord_cartesian`. The $x$ axis shows dates, so the limits need to be dates too.)
+- [x] Produce a line plot showing how the maximum temperature in July recorded in the station in Southampton has changed over time. Add nice labels to your plot.
+- [x] There appears to be a break in the plotted line. Work out where it is by using `coord_cartesian` to zoom in on the $x$ axis, and then check the dataset to identify the root cause. (Hint: look at the `xlim` argument of `coord_cartesian`. The $x$ axis shows dates, so the limits need to be dates too.)
 
 ::: {.solution}
+Line Plot showing how max temp has changed in Southampton over time.
+```{r}
+met |> filter(station == "southampton") |> filter(month == 7)|> ggplot(aes(x = year, y = tmax)) +
+  geom_line(linewidth = 1) +
+  labs( title = "Maximum temperature recoded in July in Southampton over time",
+        x = "year",
+        y = "mean maximum daily temperature")
+```
+we zoom in to see the break in better detail
+```{r}
+met |> filter(station == "southampton") |> filter(month == 7)|> ggplot(aes(x = year, y = tmax)) +
+  geom_line(linewidth = 1) +
+  labs( title = "Maximum temperature recoded in July in Southampton over time",
+        x = "year",
+        y = "mean maximum daily temperature") +
+  coord_cartesian(xlim = c(1925, 1950)) 
 
+#We zoom in even further
+met |> filter(station == "southampton") |> filter(month == 7)|> ggplot(aes(x = year, y = tmax)) +
+  geom_line(linewidth = 1) +
+  labs( title = "Maximum temperature recoded in July in Southampton over time",
+        x = "year",
+        y = "mean maximum daily temperature") +
+  coord_cartesian(xlim = c(1939, 1944))
+
+```
+
+Checking data set:
+```{r}
+met|> filter(station == "southampton") |> filter( year == 1941) 
+
+```
+We can see has NA values. (missing values)
 :::
 
 Next we look at every month of the year, not just July, at four stations.
 
-- [ ] Produce a scatter plot of the maximum temperature `tmax` against `date` for every month in Southampton, Oxford, Sheffield and Paisley. Colour the points by station.
-- [ ] Look up the function `geom_smooth`. Use the function to overlay a smooth trend line on the points. Make sure the line is visible by adjusting the `alpha` property on `geom_point`.
-- [ ] What does the line tell you about the trend of historical maximum temperatures?
+- [x] Produce a scatter plot of the maximum temperature `tmax` against `date` for every month in Southampton, Oxford, Sheffield and Paisley. Colour the points by station.
+- [x] Look up the function `geom_smooth`. Use the function to overlay a smooth trend line on the points. Make sure the line is visible by adjusting the `alpha` property on `geom_point`.
+- [x] What does the line tell you about the trend of historical maximum temperatures? It is going slightly upwards
 
 ::: {.solution}
-
+```{r}
+#| message: FALSE
+met |> filter(station %in% c("southampton", "oxford", "sheffield", "paisley")) |> filter(is.na(tmax) == FALSE) |>
+  ggplot(aes(x = date, y = tmax)) +
+  geom_point(aes(colour = station), alpha = 0.2) +
+  labs( title = "Maximum temperature recoded in four cities over time",
+        x = "date",
+        y = "mean maximum daily temperature",
+        colour = "Station") +
+  theme_minimal() +
+  geom_smooth(aes(colour= station), method = "lm", se = FALSE)
+```
 :::
 
 The plot above mixes together every month of the year, so the seasonal cycle hides the long-term trend.
