@@ -48,11 +48,12 @@ head(met)
 ::: {.solution}
 Line Plot showing how max temp has changed in Southampton over time.
 ```{r}
-met |> filter(station == "southampton") |> filter(month == 7)|> ggplot(aes(x = year, y = tmax)) +
+max_temp_soton <- met |> filter(station == "southampton") |> filter(month == 7)|> ggplot(aes(x = year, y = tmax)) +
   geom_line(linewidth = 1) +
   labs( title = "Maximum temperature recoded in July in Southampton over time",
         x = "year",
         y = "mean maximum daily temperature")
+max_temp_soton
 ```
 we zoom in to see the break in better detail
 ```{r}
@@ -90,7 +91,7 @@ Next we look at every month of the year, not just July, at four stations.
 ::: {.solution}
 ```{r}
 #| message: FALSE
-met |> filter(station %in% c("southampton", "oxford", "sheffield", "paisley")) |> filter(is.na(tmax) == FALSE) |>
+max_temp1 <- met |> filter(station %in% c("southampton", "oxford", "sheffield", "paisley")) |> filter(is.na(tmax) == FALSE) |>
   ggplot(aes(x = date, y = tmax)) +
   geom_point(aes(colour = station), alpha = 0.2) +
   labs( title = "Maximum temperature recoded in four cities over time",
@@ -99,6 +100,7 @@ met |> filter(station %in% c("southampton", "oxford", "sheffield", "paisley")) |
         colour = "Station") +
   theme_minimal() +
   geom_smooth(aes(colour= station), method = "lm", se = FALSE)
+max_temp1
 ```
 :::
 
@@ -115,25 +117,65 @@ Averaging over each year removes the seasonal cycle, since every (complete) year
 
 ### Task 2: Rainfall
 
-- [ ] Produce a bar chart showing how many monthly records there are for each station, using `geom_bar()`. Then produce the same chart using `count()` and `geom_col()`. (Hint: to make the station names readable, add `theme(axis.text.x = element_text(angle = 45, hjust = 1))` to your plot.)
+- [x] Produce a bar chart showing how many monthly records there are for each station, using `geom_bar()`. Then produce the same chart using `count()` and `geom_col()`. (Hint: to make the station names readable, add `theme(axis.text.x = element_text(angle = 45, hjust = 1))` to your plot.)
 
 ::: {.solution}
+```{r}
+n_records_pl1 <- met |> ggplot(aes(x = station)) +
+  geom_bar() +
+  labs(title = "Number of monthly records per station", x = "Station", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+n_records1
+
+
+n_records_pl2 <- met |>  group_by(station) |> summarise(n_records = n()) |>ggplot(aes(x = station, y= n_records)) +
+  geom_col() +
+  labs(title = "Number of monthly records per station", x = "Station", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+n_records_pl2
+```
+OMG its the same exact graph
 
 :::
 
-- [ ] Produce a bar chart showing the average rainfall (across all months and years) for the 5 stations with the highest average rainfall.
-- [ ] Now make a *deliberately misleading* version of this plot, which suggests that Cwmystwyth gets several times as much rain as Stornoway. Which of the principles in the Week 6 notes does your plot break? How could a reader spot the trick?
+- [x] Produce a bar chart showing the average rainfall (across all months and years) for the 5 stations with the highest average rainfall.
+- [x] Now make a *deliberately misleading* version of this plot, which suggests that Cwmystwyth gets several times as much rain as Stornoway. Which of the principles in the Week 6 notes does your plot break? How could a reader spot the trick?
 
 ::: {.solution}
+Find top 5 
+```{r}
+met |>  group_by(station) |> summarise(average_rainfall = mean(rain, na.rm = TRUE)) |> arrange(desc(average_rainfall)) |> head(5)
+```
+Bar chart of average rainfall
 
+```{r}
+rain_plot_1 <- met |>  group_by(station) |> summarise(average_rainfall = mean(rain, na.rm = TRUE)) |> arrange(desc(average_rainfall)) |> head(5) |> ggplot(aes(x = station, y = average_rainfall)) +
+  geom_col() +
+  labs(title = "Average Rainfall for the wettest stations", x = "Station", y = "Average Rainfall")
+rain_plot_1
+
+rain_plot_2 <- met |>  group_by(station) |> summarise(average_rainfall = mean(rain, na.rm = TRUE)) |> arrange(desc(average_rainfall)) |> head(5) |> ggplot(aes(x = station, y = average_rainfall)) +
+  geom_col() +
+  labs(title = "Average Rainfall for the wettest stations", x = "Station", y = "Average Rainfall") +
+  coord_cartesian(ylim = c(95, 160))
+rain_plot_2
+```
+The second plot breaks the principal of starting the bar charts at zero on the numerical axis.
 :::
 
 Bar charts of averages hide how much the rainfall varies from month to month, so next we look at its *distribution*.
 
-- [ ] Look up how to produce a box plot with `ggplot`, and produce a box plot of rainfall at each station. Are there any outliers at the low end? Why not?
+- [x] Look up how to produce a box plot with `ggplot`, and produce a box plot of rainfall at each station. Are there any outliers at the low end? Why not?
 
 ::: {.solution}
-
+```{r}
+rain_plot_3 <- met |> group_by(station) |> ggplot(aes(x = station, y = rain)) +
+  geom_boxplot() +
+  labs(title = "Box plot of rainfall", x = "Station", y = "Rainfall") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+rain_plot_3
+```
+so many outliers but none at low end because standard deviation or length of IQR is too big to get outliers at low end. 
 :::
 
 - [ ] Plot a histogram of monthly rainfall across all stations. Experiment with the `bins` argument. How would you describe the shape of the distribution?
