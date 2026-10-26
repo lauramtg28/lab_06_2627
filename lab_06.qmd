@@ -107,12 +107,51 @@ max_temp1
 The plot above mixes together every month of the year, so the seasonal cycle hides the long-term trend.
 Averaging over each year removes the seasonal cycle, since every (complete) year contains one of each month.
 
-- [ ] For each of Southampton, Oxford, Sheffield and Paisley, compute the mean `tmax` in each year. Plot these annual means against `year` as a line plot, coloured by station, and add a smooth trend line. Is the trend easier to see now?
-- [ ] Some of the annual means look suspicious. Which years have the lowest and highest annual means? How many months of data is each annual mean based on? (Hint: how would you count the *non-missing* values of a column inside `summarise`?)
-- [ ] Redraw the plot using only years with a complete set of 12 months. Roughly how much have annual mean maximum temperatures risen at these stations?
+- [x] For each of Southampton, Oxford, Sheffield and Paisley, compute the mean `tmax` in each year. Plot these annual means against `year` as a line plot, coloured by station, and add a smooth trend line. Is the trend easier to see now?
+- [x] Some of the annual means look suspicious. Which years have the lowest and highest annual means? How many months of data is each annual mean based on? (Hint: how would you count the *non-missing* values of a column inside `summarise`?)
+- [x] Redraw the plot using only years with a complete set of 12 months. Roughly how much have annual mean maximum temperatures risen at these stations?
 
 ::: {.solution}
+```{r}
+#| message: false
+max_temp2 <- met |> filter(station %in% c("southampton", "oxford", "sheffield", "paisley")) |> group_by(station, year) |> summarise(yearly_tmax = mean(tmax), .groups = "drop_last") |>
+  ggplot(aes(x = year, y = yearly_tmax, colour = station)) +
+  geom_line(linewidth = 1, alpha = 0.2) +
+  labs( title = "average maximum temperature over time for 4 stations",
+        x = "year",
+        y = "mean maximum daily temperature") +
+  geom_smooth( se = FALSE)
+max_temp2
+```
+Paisley's average looks weird.
 
+Try again with not including NA values
+```{r}
+#| message: false
+max_temp3 <- met |> filter(station %in% c("southampton", "oxford", "sheffield", "paisley")) |> filter(is.na(tmax) == FALSE) |> group_by(station, year) |> summarise(yearly_tmax = mean(tmax, na.rm = TRUE), .groups = "drop_last") |>
+  ggplot(aes(x = year, y = yearly_tmax, colour = station)) +
+  geom_line(linewidth = 1, alpha = 0.2) +
+  labs( title = "average maximum temperature over time for 4 stations",
+        x = "year",
+        y = "mean maximum daily temperature") +
+  geom_smooth( se = FALSE)
+max_temp3
+```
+Now it's weirder
+
+Try again only with years with complete sets of data:
+
+```{r}
+max_temp4 <- met |> filter(station %in% c("southampton", "oxford", "sheffield", "paisley")) |> filter(is.na(tmax) == FALSE) |> group_by(station, year) |> filter(n() ==12)|> summarise(yearly_tmax = mean(tmax), .groups = "drop_last") |>
+  ggplot(aes(x = year, y = yearly_tmax, colour = station)) +
+  geom_line(linewidth = 1, alpha = 0.2) +
+  labs( title = "average maximum temperature over time for 4 stations",
+        x = "year",
+        y = "mean maximum daily temperature") +
+  geom_smooth( se = FALSE)
+max_temp4
+```
+Temperature has risen by roughly two degrees. 
 :::
 
 ### Task 2: Rainfall
@@ -125,7 +164,7 @@ n_records_pl1 <- met |> ggplot(aes(x = station)) +
   geom_bar() +
   labs(title = "Number of monthly records per station", x = "Station", y = "Count") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-n_records1
+n_records_pl1
 
 
 n_records_pl2 <- met |>  group_by(station) |> summarise(n_records = n()) |>ggplot(aes(x = station, y= n_records)) +
@@ -178,13 +217,56 @@ rain_plot_3
 so many outliers but none at low end because standard deviation or length of IQR is too big to get outliers at low end. 
 :::
 
-- [ ] Plot a histogram of monthly rainfall across all stations. Experiment with the `bins` argument. How would you describe the shape of the distribution?
-- [ ] Redraw the histogram with a logarithmic $x$ axis (see the Week 6 notes). What happens to the shape? Read the warning messages carefully, and compare the number of rows removed with the previous histogram. Which months have been dropped, and why?
+- [x] Plot a histogram of monthly rainfall across all stations. Experiment with the `bins` argument. How would you describe the shape of the distribution?
+- [x] Redraw the histogram with a logarithmic $x$ axis (see the Week 6 notes). What happens to the shape? Read the warning messages carefully, and compare the number of rows removed with the previous histogram. Which months have been dropped, and why?
 
 ::: {.solution}
+Histogram
+```{r}
+rainfall_hist_1 <- met |> filter( is.na(rain) == FALSE)|> ggplot(aes( x = rain)) +
+  geom_histogram(aes( y = after_stat(density)), bins = 50) +
+  labs( title = "Histogram of monthly rainfall across all stations",
+        x = "Rainfall",
+        y = "density")
+rainfall_hist_1
+```
+```{r}
+rainfall_hist_2 <- met |> filter( is.na(rain) == FALSE ) |> ggplot(aes( x = rain)) +
+  geom_histogram(aes( y = after_stat(density)), bins = 50) +
+  labs( title = "Histogram of monthly rainfall across all stations",
+        x = "Rainfall",
+        y = "density")+
+  scale_x_continuous(transform = "log10")
+rainfall_hist_2
+```
+The warning is telling me not to include 0 as this leads to a warning message
+
+```{r}
+rainfall_hist_3 <- met |> filter( is.na(rain) == FALSE ) |> filter( rain > 0)|> ggplot(aes( x = rain)) +
+  geom_histogram(aes( y = after_stat(density)), bins = 50) +
+  labs( title = "Histogram of monthly rainfall across all stations",
+        x = "Rainfall",
+        y = "density")+
+  scale_x_continuous(transform = "log10")
+rainfall_hist_3
+```
+```{r}
+met |> filter( is.na(rain) == FALSE ) |> filter( rain <= 0)
+```
+We have dropped 9 rows where there was no rain in that month at all.
 
 :::
 
 ## Finished? {.unnumbered}
 
 Carry on with the questions in `lab_06_practice.qmd`.
+
+
+
+
+
+
+
+
+
+yo
